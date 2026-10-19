@@ -11,6 +11,7 @@
 #include <xcore/parallel.h>
 #include <xcore/hwtimer.h>
 
+#include "app.h"
 #include "app_config.h"
 #include "mic_array.h"
 #include "device_pll_ctrl.h"
@@ -87,6 +88,10 @@ void user_audio(chanend_t c_mic_audio)
     uint64_t den = 0;
 
     printf("mic start\n");
+    ma_frame_rx(buff_ptr, (chanend_t)c_mic_audio, MIC_ARRAY_CONFIG_MIC_COUNT, APP_N_SAMPLES);
+    buff_ptr += APP_N_SAMPLES;
+    frame_counter--;
+
     t2 = hwtimer_get_time(tmr);
     while (frame_counter--)
     {
@@ -125,13 +130,28 @@ void user_audio(chanend_t c_mic_audio)
     printf("Writing output to %s\n", APP_FILENAME);
     FILE *f = fopen(APP_FILENAME, "wb");
     assert(f != NULL);
-    fwrite(tmp_buff, sizeof(int32_t), APP_BUFF_SIZE, f);
-    fclose(f);
+    assert(setvbuf(f, NULL, _IONBF, 0) == 0);
+
+    const size_t max_write_samples = 64;
+    for (size_t offset = 0; offset < APP_BUFF_SIZE; offset += max_write_samples)
+    {
+        const size_t remaining = APP_BUFF_SIZE - offset;
+        const size_t write_samples =
+            remaining < max_write_samples ? remaining : max_write_samples;
+        const size_t written = fwrite(
+            &tmp_buff[offset],
+            sizeof(int32_t),
+            write_samples,
+            f);
+        assert(written == write_samples);
+    }
+    assert(fclose(f) == 0);
     ma_shutdown(c_mic_audio);
     printf("Done\n");
 }
 
-void main_tile_1(){
+void app_main(void)
+{
     channel_t c_mic_audio = chan_alloc();
     xscope_mode_lossless();
 
@@ -141,9 +161,4 @@ void main_tile_1(){
         PJOB(user_audio, (c_mic_audio.end_b))
     );
     chan_free(c_mic_audio);
-}
-
-void main_tile_0(){
-    // intentionally left empty
-    return;
 }
