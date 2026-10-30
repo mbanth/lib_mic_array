@@ -11,31 +11,21 @@ if(NOT DEFINED APP_HW_TARGET_VX)
     set(APP_HW_TARGET_VX ${CMAKE_CURRENT_LIST_DIR}/../../XK-EVK-XU416.xml)
 endif()
 
+set(APP_COMPILER_FLAGS -g -DUNITY_INCLUDE_CONFIG_H=1)
+
 # Target specific compiler flags
-if(XMOS_IS_RV)
-    set(APP_COMPILER_FLAGS          -O2
-                                    -g
-                                    -Wno-unknown-pragmas
-                                    -Wno-format
-                                    -DUNITY_INCLUDE_CONFIG_H=1)
+if(XMOS_IS_RV OR APP_HW_TARGET STREQUAL "XK-EVK-XU416")
+    list(APPEND APP_COMPILER_FLAGS  -O2)
 elseif(NOT DEFINED APP_HW_TARGET OR APP_HW_TARGET STREQUAL "XK-EVK-XU316")
     set(APP_HW_TARGET XK-EVK-XU316)
-    set(APP_COMPILER_FLAGS          -O2
-                                    -g
+    list(APPEND APP_COMPILER_FLAGS  -O2
                                     -report
                                     -mcmodel=large
                                     -fcmdline-buffer-bytes=1024
                                     -Wno-xcore-fptrgroup
                                     -Wno-unknown-pragmas
                                     -Wno-format
-                                    -fxscope
-                                    -DUNITY_INCLUDE_CONFIG_H=1)
-elseif(APP_HW_TARGET STREQUAL "XK-EVK-XU416")
-    set(APP_COMPILER_FLAGS  
-                                    -Os 
-                                    -g
-                                    -Wno-fptrgroup
-                                    -DUNITY_INCLUDE_CONFIG_H=1)
+                                    -fxscope)
 else()
     message(FATAL_ERROR "Unsupported target ${APP_HW_TARGET}.")
 endif()

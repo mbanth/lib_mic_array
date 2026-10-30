@@ -8,21 +8,8 @@ set(APP_DEPENDENT_MODULES   "lib_mic_array")
 
 set(AUTOGEN_OUT_DIR "${CMAKE_CURRENT_BINARY_DIR}/autogen")
 
-# New VX4 toolchain target
-if(NOT DEFINED APP_HW_TARGET_VX)
-    set(APP_HW_TARGET_VX ${CMAKE_CURRENT_LIST_DIR}/../../../../XK-EVK-XU416.xml)
-endif()
-
 # Target specific
-if(XMOS_IS_RV)
-    set(ISR_LIST 0) # Only thread-based PDM handling supported on VX4
-    set(APP_C_SRCS
-        src/app.c
-        src/app_pll.c
-        src/main.c
-        src/mips/print_mips.c
-    )
-elseif(NOT DEFINED APP_HW_TARGET OR APP_HW_TARGET STREQUAL "XK-EVK-XU316")
+if(NOT DEFINED APP_HW_TARGET OR APP_HW_TARGET STREQUAL "XK-EVK-XU316")
     set(APP_HW_TARGET XK-EVK-XU316)
     set(ISR_LIST 0 1) # ISR and thread-based PDM handling
     list(APPEND APP_DEPENDENT_MODULES "lib_board_support(1.5.0)")
@@ -83,12 +70,8 @@ foreach(SAMP_FREQ   16000 32000 48000 "good_3_stage_filter_int.pkl")
                                                 -DMIC_ARRAY_CONFIG_USE_PDM_ISR=${USE_ISR}
                                                 -DMIC_ARRAY_CONFIG_MIC_COUNT=${N_MICS}
                                                 -DAPP_SAMP_FREQ=${APP_SAMP_FREQ}
-                                                -DUSE_CUSTOM_FILTER=${USE_CUSTOM_FILT})
-            if(XMOS_IS_RV)
-                list(APPEND APP_COMPILER_FLAGS_${CONFIG} -DAPP_MIPS_NEW_VX4_TOOLCHAIN)
-            else()
-                list(APPEND APP_COMPILER_FLAGS_${CONFIG} -report)
-            endif()
+                                                -DUSE_CUSTOM_FILTER=${USE_CUSTOM_FILT}
+                                                -report)
         endforeach()
     endforeach()
 endforeach()
